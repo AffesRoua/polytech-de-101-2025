@@ -19,7 +19,7 @@ def create_consolidate_tables():
     with open("data/sql_statements/create_consolidate_tables.sql") as fd:
         statements = fd.read()
         for statement in statements.split(";"):
-            #print(statement)
+            print(statement)
             con.execute(statement)
 
 def consolidate_city_data():
@@ -35,7 +35,7 @@ def consolidate_city_data():
     """
     con = duckdb.connect(database = "data/duckdb/mobility_analysis.duckdb", read_only = False)
     data = {}
-
+    
     with open(f"data/raw_data/{today_date}/paris_realtime_bicycle_data.json") as fd:
         data = json.load(fd)
 
@@ -59,7 +59,16 @@ def consolidate_city_data():
     
     con.execute("INSERT OR REPLACE INTO CONSOLIDATE_CITY SELECT * FROM city_data_df;")
 
-def consolidate_station_data():
+def get_max_station_id(con):
+    """
+    Récupère l'ID maximum existant dans la table CONSOLIDATE_STATION.
+    Si la table est vide, retourne 0.
+    """
+    result = con.execute("SELECT MAX(CAST(ID AS INTEGER)) FROM CONSOLIDATE_STATION;").fetchone()
+    return result[0] if result[0] is not None else 0
+
+
+def consolidate_station_paris_data():
 
     """
     Consolide les données de station dans la table CONSOLIDATE_STATION.
@@ -90,10 +99,56 @@ def consolidate_station_data():
         "CAPACITTY": raw_data_df["capacity"]          
     })
     station_data_df.drop_duplicates(inplace = True)
+
     station_data_df.insert(0, "ID", station_data_df.index.astype(str))
+
+
     #print(station_data_df)
     
+    #con.execute("INSERT OR REPLACE INTO CONSOLIDATE_STATION SELECT * FROM station_data_df;")
+
+def consolidate_station_nantes_data():
+
+    """
+    Consolide les données de station dans la table CONSOLIDATE_STATION.
+
+    - Extrait les informations de base sur chaque station (nom, ville, capacité, etc.).
+    - Génère un ID unique pour chaque station.
+    - Supprime les doublons dans les données.
+    - Insère ou remplace les données dans la table CONSOLIDATE_STATION.
+    """
+    con = duckdb.connect(database = "data/duckdb/mobility_analysis.duckdb", read_only = False)
+    data = {}
+
+    with open(f"data/raw_data/{today_date}/nantes_realtime_bicycle_data.json") as fd:
+        data = json.load(fd)
+    raw_data_df = pd.json_normalize(data["results"])
+    #print(raw_data_df)
+    station_data_df = pd.DataFrame({      
+        "CODE": raw_data_df["number"],
+        "NAME": raw_data_df["name"],
+        "CITY_NAME": None,
+        "CITY_CODE": None,
+        "ADDRESS": raw_data_df["address"],                             
+        "LONGITUDE": raw_data_df["position.lon"],
+        "LATITUDE": raw_data_df["position.lat"],
+        "STATUS": None,
+        "CREATED_DATE": date.today(),  
+        "CAPACITTY": raw_data_df["bike_stands"]          
+    })
+    station_data_df.drop_duplicates(inplace = True)
+
+    max_id = int(get_max_station_id(con))
+    print(max_id)
+    print(type(int(max_id)))
+    station_data_df.insert(0, "ID", range(max_id + 1, max_id + 1 + len(station_data_df)))
+
+    #station_data_df.insert(0, "ID", station_data_df.index.astype(str))
+
+    print(station_data_df)
+    
     con.execute("INSERT OR REPLACE INTO CONSOLIDATE_STATION SELECT * FROM station_data_df;")
+
 
 def consolidate_station_statement_data():
 

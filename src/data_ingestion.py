@@ -19,6 +19,23 @@ def get_paris_realtime_bicycle_data():
     
     serialize_data(response.text, "paris_realtime_bicycle_data.json")
 
+def get_nantes_realtime_bicycle_data():
+    """
+    Récupère les données en temps réel de la disponibilité des vélos à Nantes.
+
+    - Fait une requête HTTP GET pour récupérer les données JSON depuis l'API OpenData Paris.
+    - Les données récupérées concernent la disponibilité en temps réel des vélos Vélib' à Paris.
+    - Sérialise les données JSON et les enregistre dans un fichier local sous forme de fichier `.json`.
+
+    """
+    
+    url = "https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/244400404_disponibilite-temps-reel-velos-libre-service-naolib-nantes-metropole/records"
+    
+    response = requests.request("GET", url)
+    
+    serialize_data(response.text, "nantes_realtime_bicycle_data.json")
+
+
 def serialize_data(raw_json: str, file_name: str):
 
     """
