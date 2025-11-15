@@ -22,7 +22,7 @@ def create_consolidate_tables():
             print(statement)
             con.execute(statement)
 
-def consolidate_city_data():
+def consolidate_city_paris_data():
 
     """
     Consolide les données au niveau de la ville dans la table CONSOLIDATE_CITY.
@@ -56,6 +56,43 @@ def consolidate_city_data():
     city_data_df["created_date"] = date.today()
 
     #print(city_data_df)
+    
+    con.execute("INSERT OR REPLACE INTO CONSOLIDATE_CITY SELECT * FROM city_data_df;")
+
+
+def consolidate_city_nantes_data():
+
+    """
+    Consolide les données au niveau de la ville dans la table CONSOLIDATE_CITY.
+
+    - Extrait les informations uniques des villes (code INSEE, arrondissement, population).
+    - Enrichit les données avec la date de création du jour.
+    - Supprime les doublons pour garantir l'unicité des villes.
+    - Insère ou remplace les données dans la table CONSOLIDATE_CITY.
+
+    """
+    con = duckdb.connect(database = "data/duckdb/mobility_analysis.duckdb", read_only = False)
+    data = {}
+    
+    with open(f"data/raw_data/{today_date}/nantes_bicycle_station_localisation_data.json") as fd:
+        data = json.load(fd)
+    raw_data_df = pd.json_normalize(data)
+    raw_data_df["nb_inhabitants"] = None
+
+    city_data_df = raw_data_df[[
+        "insee",
+        "commune",
+        "nb_inhabitants"
+    ]]
+    city_data_df.rename(columns={
+        "insee": "id",
+        "commune": "name"
+    }, inplace=True)
+
+    city_data_df.drop_duplicates(inplace = True)
+    city_data_df["created_date"] = date.today()
+
+    print(city_data_df)
     
     con.execute("INSERT OR REPLACE INTO CONSOLIDATE_CITY SELECT * FROM city_data_df;")
 
@@ -105,7 +142,7 @@ def consolidate_station_paris_data():
 
     #print(station_data_df)
     
-    #con.execute("INSERT OR REPLACE INTO CONSOLIDATE_STATION SELECT * FROM station_data_df;")
+    con.execute("INSERT OR REPLACE INTO CONSOLIDATE_STATION SELECT * FROM station_data_df;")
 
 def consolidate_station_nantes_data():
 
@@ -121,32 +158,36 @@ def consolidate_station_nantes_data():
     data = {}
 
     with open(f"data/raw_data/{today_date}/nantes_realtime_bicycle_data.json") as fd:
-        data = json.load(fd)
-    raw_data_df = pd.json_normalize(data["results"])
-    #print(raw_data_df)
+        data_station_real_time = json.load(fd)
+    data_station_real_time = pd.json_normalize(data_station_real_time)
+
+    with open(f"data/raw_data/{today_date}/nantes_bicycle_station_localisation_data.json") as fd:
+        data_station_localisation = json.load(fd)
+    data_station_localisation = pd.json_normalize(data_station_localisation)
+
+    data_station=data_station_real_time.merge(
+        data_station_localisation,
+        how='left',
+        left_on='address',
+        right_on='localisation'
+    )
+
     station_data_df = pd.DataFrame({      
-        "CODE": raw_data_df["number"],
-        "NAME": raw_data_df["name"],
-        "CITY_NAME": None,
-        "CITY_CODE": None,
-        "ADDRESS": raw_data_df["address"],                             
-        "LONGITUDE": raw_data_df["position.lon"],
-        "LATITUDE": raw_data_df["position.lat"],
+        "CODE": data_station["number"],
+        "NAME": data_station["name"],
+        "CITY_NAME": data_station["commune"],
+        "CITY_CODE": data_station["cp"],
+        "ADDRESS": data_station["address"],                             
+        "LONGITUDE": data_station["position.lon"],
+        "LATITUDE": data_station["position.lat"],
         "STATUS": None,
         "CREATED_DATE": date.today(),  
-        "CAPACITTY": raw_data_df["bike_stands"]          
+        "CAPACITTY": data_station["bike_stands"]          
     })
     station_data_df.drop_duplicates(inplace = True)
 
     max_id = int(get_max_station_id(con))
-    print(max_id)
-    print(type(int(max_id)))
     station_data_df.insert(0, "ID", range(max_id + 1, max_id + 1 + len(station_data_df)))
-
-    #station_data_df.insert(0, "ID", station_data_df.index.astype(str))
-
-    print(station_data_df)
-    
     con.execute("INSERT OR REPLACE INTO CONSOLIDATE_STATION SELECT * FROM station_data_df;")
 
 

@@ -10,12 +10,14 @@ from data_consolidation import (
     create_consolidate_tables,
     consolidate_station_paris_data ,
     consolidate_station_nantes_data, 
-    consolidate_city_data,
+    consolidate_city_nantes_data,
+    consolidate_city_paris_data,
     consolidate_station_statement_data,
 )
 from data_ingestion import (
     get_paris_realtime_bicycle_data,
-    get_nantes_realtime_bicycle_data
+    get_nantes_realtime_bicycle_data,
+    get_nantes_realtime_bicycle_station_localisation_data
 )
 
 def main():
@@ -25,13 +27,14 @@ def main():
     print("Data ingestion started.")
     get_paris_realtime_bicycle_data()
     get_nantes_realtime_bicycle_data()
+    get_nantes_realtime_bicycle_station_localisation_data()
     print("Data ingestion ended.")
 
     # data consolidation
     print("Consolidation data started.")
-    #create_consolidate_tables()
-
-    #consolidate_city_data()
+    create_consolidate_tables()
+    consolidate_city_paris_data()
+    consolidate_city_nantes_data()
     consolidate_station_paris_data()
     consolidate_station_nantes_data()
 '''
