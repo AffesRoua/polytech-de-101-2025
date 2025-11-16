@@ -79,23 +79,7 @@ def build_fact_station_statement():
     """
 
     con = duckdb.connect(database = "data/duckdb/mobility_analysis.duckdb", read_only = False)
-    
-    sql_statement = """
-        INSERT OR REPLACE INTO FACT_STATION_STATEMENT
-        SELECT 
-            s.ID AS STATION_ID,
-            c.ID AS CITY_ID,
-            SUM(ss.BICYCLE_DOCKS_AVAILABLE) AS BICYCLE_DOCKS_AVAILABLE,
-            SUM(ss.BICYCLE_AVAILABLE) AS BICYCLE_AVAILABLE,
-            MAX(ss.LAST_STATEMENT_DATE) AS LAST_STATEMENT_DATE,
-            CURRENT_DATE AS CREATED_DATE
-        FROM CONSOLIDATE_STATION_STATEMENT ss
-        JOIN CONSOLIDATE_STATION s
-            ON ss.STATION_ID = s.ID
-        JOIN CONSOLIDATE_CITY c
-            ON s.CITY_CODE = c.ID
-        GROUP BY s.ID, c.ID
-    """
+
     sql_statement = """
         INSERT OR REPLACE INTO FACT_STATION_STATEMENT
         SELECT
