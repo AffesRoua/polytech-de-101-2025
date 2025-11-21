@@ -4,6 +4,8 @@ from datetime import datetime, date
 import duckdb
 import pandas as pd
 
+import utils
+
 today_date = datetime.now().strftime("%Y-%m-%d")
 
 def create_consolidate_tables():
@@ -54,9 +56,6 @@ def consolidate_city_paris_data():
 
     city_data_df.drop_duplicates(inplace = True)
     city_data_df["created_date"] = date.today()
-
-    #print(city_data_df)
-    
     con.execute("INSERT OR REPLACE INTO CONSOLIDATE_CITY SELECT * FROM city_data_df;")
 
 
@@ -91,18 +90,7 @@ def consolidate_city_nantes_data():
 
     city_data_df.drop_duplicates(inplace = True)
     city_data_df["created_date"] = date.today()
-
-    print(city_data_df)
-    
     con.execute("INSERT OR REPLACE INTO CONSOLIDATE_CITY SELECT * FROM city_data_df;")
-
-def get_max_station_id(con):
-    """
-    Récupère l'ID maximum existant dans la table CONSOLIDATE_STATION.
-    Si la table est vide, retourne 0.
-    """
-    result = con.execute("SELECT MAX(CAST(ID AS INTEGER)) FROM CONSOLIDATE_STATION;").fetchone()
-    return result[0] if result[0] is not None else 0
 
 
 def consolidate_station_paris_data():
@@ -122,7 +110,6 @@ def consolidate_station_paris_data():
         data = json.load(fd)
 
     raw_data_df = pd.json_normalize(data)
-    #print(raw_data_df)
     station_data_df = pd.DataFrame({      
         "CODE": raw_data_df["stationcode"],
         "NAME": raw_data_df["name"],
@@ -135,13 +122,9 @@ def consolidate_station_paris_data():
         "CREATED_DATE": date.today(),  
         "CAPACITTY": raw_data_df["capacity"]          
     })
+
     station_data_df.drop_duplicates(inplace = True)
-
     station_data_df.insert(0, "ID", station_data_df.index.astype(str))
-
-
-    #print(station_data_df)
-    
     con.execute("INSERT OR REPLACE INTO CONSOLIDATE_STATION SELECT * FROM station_data_df;")
 
 def consolidate_station_nantes_data():
@@ -186,7 +169,7 @@ def consolidate_station_nantes_data():
     })
     station_data_df.drop_duplicates(inplace = True)
 
-    max_id = int(get_max_station_id(con))
+    max_id = int(utils.get_max_station_id(con))
     station_data_df.insert(0, "ID", range(max_id + 1, max_id + 1 + len(station_data_df)))
     con.execute("INSERT OR REPLACE INTO CONSOLIDATE_STATION SELECT * FROM station_data_df;")
 
@@ -227,7 +210,6 @@ def consolidate_station_statement_paris_data():
 
     # Supprimer les doublons et réinitialiser l'index
     station_statement_df.drop_duplicates(inplace=True, ignore_index=True)
-    #print(station_statement_df)
     
     # Insérer les données dans la table de faits CONSOLIDATE_STATION_STATEMENT
     con.execute("INSERT OR REPLACE INTO CONSOLIDATE_STATION_STATEMENT SELECT * FROM station_statement_df;")
@@ -269,7 +251,6 @@ def consolidate_station_statement_paris_data():
 
     # Supprimer les doublons et réinitialiser l'index
     station_statement_df.drop_duplicates(inplace=True, ignore_index=True)
-    #print(station_statement_df)
     
     # Insérer les données dans la table de faits CONSOLIDATE_STATION_STATEMENT
     con.execute("INSERT OR REPLACE INTO CONSOLIDATE_STATION_STATEMENT SELECT * FROM station_statement_df;")
@@ -299,8 +280,7 @@ def consolidate_station_statement_nantes_data():
     # Vérifier les lignes sans correspondance (ID manquant)
     if merged_df['ID'].isnull().any():
         print("Attention : certaines stations n'ont pas pu être associées à un ID.")
-    print("---------------------------------")
-    print(merged_df)
+
     # Création du DataFrame consolidé
     station_statement_df = pd.DataFrame({
         "STATION_ID": merged_df["ID"],  # Utiliser "ID" comme identifiant de station
@@ -312,7 +292,6 @@ def consolidate_station_statement_nantes_data():
 
     # Supprimer les doublons et réinitialiser l'index
     station_statement_df.drop_duplicates(inplace=True, ignore_index=True)
-    print(station_statement_df)
     
     # Insérer les données dans la table de faits CONSOLIDATE_STATION_STATEMENT
     con.execute("INSERT OR REPLACE INTO CONSOLIDATE_STATION_STATEMENT SELECT * FROM station_statement_df;")
