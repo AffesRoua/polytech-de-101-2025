@@ -96,6 +96,8 @@ def build_fact_station_statement():
         JOIN
             CONSOLIDATE_CITY c ON s.CITY_CODE = c.ID         
     """
+
+
     con.execute(sql_statement)
 
 

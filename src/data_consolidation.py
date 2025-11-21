@@ -24,7 +24,7 @@ def create_consolidate_tables():
             print(statement)
             con.execute(statement)
 
-def consolidate_city_paris_data():
+def consolidate_city_data() :
 
     """
     Consolide les données au niveau de la ville dans la table CONSOLIDATE_CITY.
@@ -38,59 +38,25 @@ def consolidate_city_paris_data():
     con = duckdb.connect(database = "data/duckdb/mobility_analysis.duckdb", read_only = False)
     data = {}
     
-    with open(f"data/raw_data/{today_date}/paris_realtime_bicycle_data.json") as fd:
+    with open(f"data/raw_data/{today_date}/communes_data.json") as fd:
         data = json.load(fd)
-
     raw_data_df = pd.json_normalize(data)
-    raw_data_df["nb_inhabitants"] = None
 
     city_data_df = raw_data_df[[
-        "code_insee_commune",
-        "nom_arrondissement_communes",
-        "nb_inhabitants"
+        "code",
+        "nom",
+        "population"
     ]]
     city_data_df.rename(columns={
-        "code_insee_commune": "id",
-        "nom_arrondissement_communes": "name"
+        "code": "id",
+        "nom": "name"
     }, inplace=True)
 
     city_data_df.drop_duplicates(inplace = True)
     city_data_df["created_date"] = date.today()
     con.execute("INSERT OR REPLACE INTO CONSOLIDATE_CITY SELECT * FROM city_data_df;")
-
-
-def consolidate_city_nantes_data():
-
-    """
-    Consolide les données au niveau de la ville dans la table CONSOLIDATE_CITY.
-
-    - Extrait les informations uniques des villes (code INSEE, arrondissement, population).
-    - Enrichit les données avec la date de création du jour.
-    - Supprime les doublons pour garantir l'unicité des villes.
-    - Insère ou remplace les données dans la table CONSOLIDATE_CITY.
-
-    """
-    con = duckdb.connect(database = "data/duckdb/mobility_analysis.duckdb", read_only = False)
-    data = {}
     
-    with open(f"data/raw_data/{today_date}/nantes_bicycle_station_localisation_data.json") as fd:
-        data = json.load(fd)
-    raw_data_df = pd.json_normalize(data)
-    raw_data_df["nb_inhabitants"] = None
 
-    city_data_df = raw_data_df[[
-        "insee",
-        "commune",
-        "nb_inhabitants"
-    ]]
-    city_data_df.rename(columns={
-        "insee": "id",
-        "commune": "name"
-    }, inplace=True)
-
-    city_data_df.drop_duplicates(inplace = True)
-    city_data_df["created_date"] = date.today()
-    con.execute("INSERT OR REPLACE INTO CONSOLIDATE_CITY SELECT * FROM city_data_df;")
 
 
 def consolidate_station_paris_data():
