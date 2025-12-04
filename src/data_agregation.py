@@ -15,7 +15,6 @@ def create_agregate_tables():
     with open("data/sql_statements/create_agregate_tables.sql") as fd:
         statements = fd.read()
         for statement in statements.split(";"):
-            print(statement)
             con.execute(statement)
 
 
@@ -94,9 +93,8 @@ def build_fact_station_statement():
         JOIN
             CONSOLIDATE_STATION s ON ss.STATION_ID = s.ID      
         JOIN
-            CONSOLIDATE_CITY c ON s.CITY_CODE = c.ID         
+            DIM_CITY c ON s.CITY_CODE = c.ID         
     """
-
 
     con.execute(sql_statement)
 

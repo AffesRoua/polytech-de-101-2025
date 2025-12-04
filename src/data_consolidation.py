@@ -21,13 +21,12 @@ def create_consolidate_tables():
     with open("data/sql_statements/create_consolidate_tables.sql") as fd:
         statements = fd.read()
         for statement in statements.split(";"):
-            print(statement)
             con.execute(statement)
 
 def consolidate_city_data() :
 
     """
-    Consolide les données au niveau de la ville dans la table CONSOLIDATE_CITY.
+    Consolide les données des villes dans la table CONSOLIDATE_CITY.
 
     - Extrait les informations uniques des villes (code INSEE, arrondissement, population).
     - Enrichit les données avec la date de création du jour.
@@ -65,8 +64,8 @@ def consolidate_station_paris_data():
     Consolide les données de station dans la table CONSOLIDATE_STATION.
 
     - Extrait les informations de base sur chaque station (nom, ville, capacité, etc.).
-    - Génère un ID unique pour chaque station.
     - Supprime les doublons dans les données.
+    - Génère un ID unique pour chaque station.
     - Insère ou remplace les données dans la table CONSOLIDATE_STATION.
     """
     con = duckdb.connect(database = "data/duckdb/mobility_analysis.duckdb", read_only = False)

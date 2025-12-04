@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 
 import requests
+import utils
 
 def get_paris_realtime_bicycle_data():
     """
@@ -17,7 +18,7 @@ def get_paris_realtime_bicycle_data():
     
     response = requests.request("GET", url)
     
-    serialize_data(response.text, "paris_realtime_bicycle_data.json")
+    utils.serialize_data(response.text, "paris_realtime_bicycle_data.json")
 
 def get_nantes_realtime_bicycle_data():
     """
@@ -33,14 +34,14 @@ def get_nantes_realtime_bicycle_data():
     
     response = requests.request("GET", url)
     
-    serialize_data(response.text, "nantes_realtime_bicycle_data.json")
+    utils.serialize_data(response.text, "nantes_realtime_bicycle_data.json")
 
 def get_nantes_realtime_bicycle_station_localisation_data():
     """
-    Récupère les données en temps réel de la disponibilité des vélos à Nantes.
+    Récupère les données en temps réel de la localisation des stations de vélos à Nantes.
 
     - Fait une requête HTTP GET pour récupérer les données JSON depuis l'API OpenData Nantes.
-    - Les données récupérées concernent la disponibilité en temps réel des vélos ' à Nantes.
+    - Les données récupérées concernent la localisation en temps réel des vélos à Nantes.
     - Sérialise les données JSON et les enregistre dans un fichier local sous forme de fichier `.json`.
 
     """
@@ -49,7 +50,7 @@ def get_nantes_realtime_bicycle_station_localisation_data():
     
     response = requests.request("GET", url)
     
-    serialize_data(response.text, "nantes_bicycle_station_localisation_data.json")
+    utils.serialize_data(response.text, "nantes_bicycle_station_localisation_data.json")
 
 
 def get_communes_data():
@@ -66,29 +67,7 @@ def get_communes_data():
     
     response = requests.request("GET", url)
     
-    serialize_data(response.text, "communes_data.json")
+    utils.serialize_data(response.text, "communes_data.json")
 
 
-def serialize_data(raw_json: str, file_name: str):
 
-    """
-    Sérialise et enregistre des données JSON dans un fichier local.
-    
-    Arguments:
-    - raw_json (str) : Les données JSON brutes à sérialiser et enregistrer.
-    - file_name (str) : Le nom du fichier de destination.
-
-
-    - Crée un dossier dans `data/raw_data/` si ce dernier n'existe pas déjà.
-    - Sauvegarde le contenu JSON (raw_json) dans un fichier dont le nom est spécifié (`file_name`).
-    - Le dossier utilisé pour l'enregistrement est daté en fonction de la date actuelle (`today_date`).
-
-    """
-
-    today_date = datetime.now().strftime("%Y-%m-%d")
-    
-    if not os.path.exists(f"data/raw_data/{today_date}"):
-        os.makedirs(f"data/raw_data/{today_date}")
-    
-    with open(f"data/raw_data/{today_date}/{file_name}", "w") as fd:
-        fd.write(raw_json)
